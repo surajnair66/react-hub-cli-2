@@ -1,0 +1,25 @@
+import { ApolloClient, createHttpLink, from, InMemoryCache } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
+// import errorLink from './errorHandling';
+
+const httpLink = createHttpLink({
+  uri: `${import.meta.env.VITE_BASE_URL}/app-main`,
+});
+
+const authLink = setContext((_, { headers }) => {
+  const token = localStorage.getItem('accessToken');
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : '',
+    },
+  };
+});
+
+export const client = new ApolloClient({
+  link: from([
+   // errorLink, 
+    authLink.concat(httpLink)
+    ]),
+  cache: new InMemoryCache(),
+});

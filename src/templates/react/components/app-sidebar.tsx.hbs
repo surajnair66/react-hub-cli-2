@@ -1,0 +1,42 @@
+import { Sidebar, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger } from "@/components/ui/sidebar";
+import { useLocation, useNavigate } from "react-router-dom";
+import getRoutes from '@/routes/routePaths';
+import { CircleDashed } from 'lucide-react';
+
+
+
+
+const items = [
+{{#each items}}
+{
+  title: '{{properCase this}}',
+  link: getRoutes.{{this}},
+  icon: CircleDashed
+},
+{{/each}}
+]
+
+export function AppSidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  return (
+    <Sidebar className="top-[72px] !h-[calc(100svh-72px)]" collapsible="icon">
+      <SidebarContent>
+        <SidebarMenu>
+          {items.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton onClick={() => navigate(item.link)} isActive={location.pathname.startsWith(item.link)}>
+                <item.icon />
+                <span>{item.title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarTrigger />
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

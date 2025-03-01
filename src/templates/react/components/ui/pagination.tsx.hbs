@@ -1,0 +1,215 @@
+import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react';
+import * as React from 'react';
+
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+function PaginationMain({ className, ...props }: React.ComponentProps<'nav'>) {
+  return (
+    <nav
+      role='navigation'
+      aria-label='pagination'
+      data-slot='pagination'
+      className={cn('mx-auto flex w-full justify-center', className)}
+      {...props}
+    />
+  );
+}
+
+function PaginationContent({ className, ...props }: React.ComponentProps<'ul'>) {
+  return (
+    <ul
+      data-slot='pagination-content'
+      className={cn('flex flex-row items-center gap-1', className)}
+      {...props}
+    />
+  );
+}
+
+function PaginationItem({ ...props }: React.ComponentProps<'li'>) {
+  return <li data-slot='pagination-item' {...props} />;
+}
+
+type PaginationLinkProps = {
+  isActive?: boolean;
+} & Pick<React.ComponentProps<typeof Button>, 'size'> &
+  React.ComponentProps<'a'>;
+
+function PaginationLink({ className, isActive, size = 'icon', ...props }: PaginationLinkProps) {
+  return (
+    <a
+      aria-current={isActive ? 'page' : undefined}
+      data-slot='pagination-link'
+      data-active={isActive}
+      className={cn(
+        buttonVariants({
+          variant: isActive ? 'outline' : 'ghost',
+          size,
+        }),
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function PaginationPrevious({ className, ...props }: React.ComponentProps<typeof PaginationLink>) {
+  return (
+    <PaginationLink
+      aria-label='Go to previous page'
+      size='default'
+      className={cn('gap-1 px-2.5 sm:pl-2.5 cursor-pointer', className)}
+      {...props}
+    >
+      <ChevronLeftIcon />
+      <span className='hidden sm:block'>Previous</span>
+    </PaginationLink>
+  );
+}
+
+function PaginationNext({ className, ...props }: React.ComponentProps<typeof PaginationLink>) {
+  return (
+    <PaginationLink
+      aria-label='Go to next page'
+      size='default'
+      className={cn('gap-1 px-2.5 sm:pr-2.5 cursor-pointer', className)}
+      {...props}
+    >
+      <span className='hidden sm:block'>Next</span>
+      <ChevronRightIcon />
+    </PaginationLink>
+  );
+}
+
+function PaginationEllipsis({ className, ...props }: React.ComponentProps<'span'>) {
+  return (
+    <span
+      aria-hidden
+      data-slot='pagination-ellipsis'
+      className={cn('flex size-9 items-center justify-center', className)}
+      {...props}
+    >
+      <MoreHorizontalIcon className='size-4' />
+      <span className='sr-only'>More pages</span>
+    </span>
+  );
+}
+
+interface PaginationProps {
+  dataCount?: number;
+  onChange?: (value: number) => void;
+  currentPage?: number;
+  siblingNumber?: number;
+  itemsPerPage?: number;
+  visiblePageButtonCount?: number;
+}
+
+const Pagination: React.FC<PaginationProps> = ({
+  currentPage = 1,
+  dataCount = 0,
+  onChange,
+  siblingNumber = 1,
+  itemsPerPage = 10,
+  visiblePageButtonCount = 5, // Number of page buttons to display (excluding Previous/Next)
+}) => {
+  const totalPages = Math.ceil(dataCount / itemsPerPage);
+
+  const handleClick = (page: number) => {
+    if (onChange && page >= 1 && page <= totalPages) {
+      onChange(page);
+    }
+  };
+
+  // Calculate the range of page numbers to display, memoized to prevent recalculation
+  const pageRange = React.useMemo(() => {
+    // For small number of pages, show all pages
+    if (totalPages <= visiblePageButtonCount) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    // Calculate how many numbered pages to show
+    const leftSiblingIndex = Math.max(currentPage - siblingNumber, 1);
+    const rightSiblingIndex = Math.min(currentPage + siblingNumber, totalPages);
+
+    const shouldShowLeftDots = leftSiblingIndex > 2;
+    const shouldShowRightDots = rightSiblingIndex < totalPages - 1;
+
+    // Case 1: Show left dots but no right dots
+    if (shouldShowLeftDots && !shouldShowRightDots) {
+      const rightItemCount = 3 + 2 * siblingNumber;
+      const rightRange = Array.from(
+        { length: rightItemCount },
+        (_, i) => totalPages - rightItemCount + i + 1,
+      );
+      return [1, -1, ...rightRange];
+    }
+
+    // Case 2: Show right dots but no left dots
+    if (!shouldShowLeftDots && shouldShowRightDots) {
+      const leftItemCount = 3 + 2 * siblingNumber;
+      const leftRange = Array.from({ length: leftItemCount }, (_, i) => i + 1);
+      return [...leftRange, -1, totalPages];
+    }
+
+    // Case 3: Show both left and right dots
+    if (shouldShowLeftDots && shouldShowRightDots) {
+      const middleRange = Array.from(
+        { length: rightSiblingIndex - leftSiblingIndex + 1 },
+        (_, i) => leftSiblingIndex + i,
+      );
+      return [1, -1, ...middleRange, -1, totalPages];
+    }
+
+    // Default case if something went wrong
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }, [currentPage, totalPages, siblingNumber, visiblePageButtonCount]);
+
+  return (
+    <PaginationMain>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            onClick={() => handleClick(currentPage - 1)}
+            aria-disabled={currentPage === 1}
+            tabIndex={currentPage === 1 ? -1 : 0}
+            className={currentPage === 1 ? 'pointer-events-none opacity-50' : undefined}
+          />
+        </PaginationItem>
+
+        {pageRange.map((pageNumber, index) => (
+          <PaginationItem key={index}>
+            {pageNumber === -1 ? (
+              <PaginationEllipsis />
+            ) : (
+              <PaginationLink
+                isActive={pageNumber === currentPage}
+                onClick={() => handleClick(pageNumber)}
+              >
+                {pageNumber}
+              </PaginationLink>
+            )}
+          </PaginationItem>
+        ))}
+
+        <PaginationItem>
+          <PaginationNext
+            onClick={() => handleClick(currentPage + 1)}
+            aria-disabled={currentPage === totalPages}
+            tabIndex={currentPage === totalPages ? -1 : 0}
+            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : undefined}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </PaginationMain>
+  );
+};
+
+export {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+};

@@ -1,0 +1,6 @@
+/* eslint-disable quotes */
+import { gql } from '@apollo/client';
+
+{{#each apis}}
+export const {{name}} = gql`{{graphqlQuery queryString}}`;
+{{/each}}

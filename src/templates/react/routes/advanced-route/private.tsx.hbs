@@ -1,0 +1,22 @@
+import PageLoader from '@/components/pageLoader';
+import PrivateLayout from '@/layout/privateLayout';
+import { authState } from '@/vars/auth';
+import { useReactiveVar } from '@apollo/client';
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import getRoutes from './routePaths';
+
+const PrivateRoutes = () => {
+  const { authenticated } = useReactiveVar(authState);
+  return authenticated ? (
+    <PrivateLayout>
+      <React.Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </React.Suspense>
+    </PrivateLayout>
+  ) : (
+    <Navigate to={getRoutes.login} />
+  );
+};
+
+export default PrivateRoutes;

@@ -1,0 +1,18 @@
+import { ring } from 'ldrs';
+import { useEffect } from 'react';
+
+const TableLoader = () => {
+  useEffect(() => {
+    ring.register();
+  }, []);
+  return (
+    <div
+      data-testid='loader-testid'
+      className='h-96 bg-white w-full flex items-center justify-center border-[#E2E4E8] border-[1px] rounded-[8px]'
+    >
+      <l-ring size='70' speed='2.0' color='#3f5595'></l-ring>
+    </div>
+  );
+};
+
+export default TableLoader;

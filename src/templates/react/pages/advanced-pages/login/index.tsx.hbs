@@ -1,0 +1,76 @@
+import LoginImage from '@/assets/login1.jpg';
+import { LoginForm, LoginProps } from '@/components/login-form';
+import { showToast } from '@/components/notify';
+import { {{currentUserHook}}, {{loginHook}} } from '@/types/gql/generated';
+import { authState } from '@/vars/auth';
+import { userDetails } from '@/vars/userDetails';
+
+export default function Login() {
+  const [getCurrentUser] = {{currentUserHook}}();
+
+  const [login, { loading }] = {{loginHook}}({
+    onCompleted: (data) => {
+      const { accessToken, refreshToken } = data.login;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      authState({
+        authenticated: true,
+        loading: false,
+        role: '',
+      });
+      getCurrentUser().then((data) => {
+        const { data: userData } = data;
+        userDetails({
+          _id: userData?.getCurrentUser?._id ?? '',
+          email: userData?.getCurrentUser?.email ?? '',
+          firstName: userData?.getCurrentUser?.firstName ?? '',
+          lastName: userData?.getCurrentUser?.lastName ?? '',
+          profileImage: userData?.getCurrentUser?.profileImage ?? '',
+        });
+      });
+      showToast({ message: 'Login successful!', variant: 'success' });
+    },
+    onError: (error) => {
+      console.error('error', error.message);
+      showToast({ message: 'Login failed: ' + error.message, variant: 'error' });
+    },
+  });
+
+  const handleSubmit = ({ email, password }: LoginProps) => {
+    login({
+      variables: {
+        data: {
+          email,
+          password,
+        },
+      },
+    });
+  };
+
+  return (
+    <div className='grid min-h-svh lg:grid-cols-2 w-screen'>
+      <div className='relative hidden bg-muted lg:block'>
+        <img
+          src={LoginImage}
+          alt='Login Image'
+          className='absolute inset-0 h-full w-full object-cover  dark:brightness-[0.2] dark:grayscale'
+        />
+      </div>
+      <div className='flex flex-col gap-4 p-6 md:p-10'>
+        <div className='flex flex-1 items-center justify-center'>
+          <div className='w-full max-w-xs'>
+            <div className='flex flex-col gap-6'>
+              <div className='flex flex-col items-center gap-2 text-center'>
+                <h1 className='!text-2xl !font-bold'>Login to your account</h1>
+                <p className='text-balance text-sm text-muted-foreground'>
+                  Enter your email below to login to your account
+                </p>
+              </div>
+              <LoginForm onSubmit={handleSubmit} loading={loading} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

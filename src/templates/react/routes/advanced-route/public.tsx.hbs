@@ -1,0 +1,21 @@
+import PageLoader from '@/components/pageLoader';
+import { authState } from '@/vars/auth';
+import { useReactiveVar } from '@apollo/client';
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import getRoutes from './routePaths';
+
+const PublicRoutes = () => {
+  const { authenticated } = useReactiveVar(authState);
+  return authenticated ? (
+    <Navigate to={getRoutes['{{initialRoute}}']} />
+  ) : (
+    <main className='h-[100dvh] w-screen overflow-y-scroll'>
+      <React.Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </React.Suspense>
+    </main>
+  );
+};
+
+export default PublicRoutes;

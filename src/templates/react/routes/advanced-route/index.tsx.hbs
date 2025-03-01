@@ -1,0 +1,36 @@
+import React from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import PrivateRoute from './private';
+import PublicRoutes from './public';
+import getRoutes from './routePaths';
+
+
+
+/* Generate lazy imports for dynamic routes */
+{{#each routeDefenitions}}
+const {{properCase name}} = React.lazy(() => import('@/pages/{{name}}'));
+{{/each}}
+
+export const Navigator = () => {
+  return (
+    <>
+      <Routes>
+        <Route element={<PublicRoutes />}>
+
+          {{!-- Dynamically generated public routes --}}
+          {{#each publicRoutes}}
+          <Route path={getRoutes['{{name}}']} element={<{{properCase name}} />} />
+          {{/each}}
+          <Route path={getRoutes.invalidPath} element={<Navigate to={getRoutes.login} />} />
+        </Route>
+        <Route element={<PrivateRoute />}>
+          <Route path={'/'} element={<Navigate to={getRoutes['{{initialRoute}}']} />} />
+          {{!-- Dynamically generated private routes --}}
+          {{#each privateRoutes}}
+          <Route path={getRoutes['{{name}}']} element={<{{properCase name}} />} />
+          {{/each}}
+        </Route>
+      </Routes>
+    </>
+  );
+};

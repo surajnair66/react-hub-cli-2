@@ -1,0 +1,262 @@
+{
+  "app": {
+    "name": "react-hub2",
+    "description": "A React app created by Hubspire",
+    "author": "Hubspire",
+    "branding": {
+      "brandName": "Hubspire",
+      "primaryColor": "#1890ff",
+      "secondaryColor": "#f0f2f5",
+      "logo": "https://www.hubspire.com/wp-content/uploads/2024/06/logo-nu.svg"
+    },
+    "apiEndpoint": "https://api.spotcastnow.com"
+  },
+  "modules": [
+    {
+      "name": "auth",
+      "pages": [
+        {
+          "type": "EmailPassword",
+          "name": "LoginPage",
+          "route": "/login",
+          "isPrivate": false,
+          "api": [
+            {
+              "type": "login",
+              "graphqlHook": "useLoginMutation",
+              "queryString": "mutation Login($data: LoginInput!) { login(data: $data) { refreshToken accessToken } }",
+              "responseType": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": { "type": "string" },
+                  "accessToken": { "type": "string" }
+                }
+              }
+            },
+            {
+              "type": "currentUser",
+              "graphqlHook": "useCurrentUserLazyQuery",
+              "queryString": "query CurrentUser { getCurrentUser { _id firstName lastName profileImage email } }"
+            }
+          ]
+        },
+        {
+          "name": "forgotPassword",
+          "type": "ForgotPassword",
+          "route": "/forgot-password",
+          "isPrivate": false,
+          "api": [{ "graphqlHook": "useForgotPasswordMutation", "queryString": "" }],
+          "fields": [
+            {
+              "name": "email",
+              "type": "email",
+              "required": true,
+              "validation": {
+                "zodString": "z.string().email()"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "pages": [
+        {
+          "type": "Listing",
+          "name": "UserListPage",
+          "route": "/users",
+          "isPrivate": true,
+          "api": [
+            {
+              "type": "list",
+              "graphqlHook": "useGetAllUsersQuery",
+              "queryString": "query GetAllUsers($search: String, $filter: JSON, $sort: JSON, $limit: Int, $offset: Int) { getAllUsers(search: $search, filter: $filter, sort: $sort, limit: $limit, offset: $offset) { _id firstName lastName email phoneNumber } }",
+              "responseType": {
+                "type": "object",
+                "properties": {
+                  "firstName": { "type": "string" },
+                  "lastName": { "type": "string" },
+                  "email": { "type": "string" },
+                  "phoneNumber": { "type": "string" },
+                  "profileImage": { "type": "string" }
+                }
+              }
+            },
+            {
+              "type": "create",
+              "graphqlHook": "useCreateUserMutation",
+              "queryString": "mutation CreateUser($data: CreateUserInput!) { createUser(data: $data) { _id firstName lastName email phoneNumber profileImage } }",
+              "responseType": {
+                "type": "object",
+                "properties": {}
+              }
+            },
+            {
+              "type": "update",
+              "graphqlHook": "useUpdateUserMutation",
+              "queryString": "mutation UpdateUser($data: UpdateUserInput!) { updateUser(data: $data) { _id firstName lastName email phoneNumber } }",
+              "responseType": {
+                "type": "object",
+                "properties": {}
+              }
+            },
+            {
+              "type": "delete",
+              "graphqlHook": "useDeleteUserMutation",
+              "queryString": "mutation DeleteUser($data: DeleteUserInput!) { deleteUser(data: $data) { _id firstName lastName email phoneNumber } }",
+              "responseType": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          ],
+          "columns": [
+            { "field": "id", "label": "User ID" },
+            { "field": "username", "label": "Username" },
+            { "field": "email", "label": "Email" }
+          ],
+          "actions": ["create", "edit", "delete"],
+          "drawerCreate": {
+            "title": "Create User",
+            "size": "medium",
+            "graphqlHook": "useCreateUserMutation",
+            "fields": [
+              {
+                "name": "username",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "pattern": "^[a-zA-Z0-9_]+$",
+                  "zodString": "z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/)"
+                }
+              },
+              {
+                "name": "email",
+                "type": "email",
+                "required": true,
+                "validation": {
+                  "pattern": "^\\S+@\\S+\\.\\S+$",
+                  "zodString": "z.string().email()"
+                }
+              },
+              {
+                "name": "password",
+                "type": "password",
+                "required": true,
+                "validation": {
+                  "minLength": 6,
+                  "zodString": "z.string().min(6)"
+                }
+              }
+            ]
+          },
+          "drawerUpdate": {
+            "title": "Update User",
+            "size": "medium",
+            "graphqlHook": "useUpdateUserMutation",
+            "fields": [
+              {
+                "name": "username",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "maxLength": 30,
+                  "zodString": "z.string().max(30)"
+                }
+              },
+              {
+                "name": "email",
+                "type": "email",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().email()"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "posts",
+      "pages": [
+        {
+          "type": "Listing",
+          "name": "PostListPage",
+          "route": "/posts",
+          "isPrivate": true,
+          "graphqlHook": "useGetAllPostsQuery",
+          "returnTypeName": "GetAllPostsQueryPayload",
+          "columns": [
+            { "field": "id", "label": "Post ID" },
+            { "field": "title", "label": "Title" },
+            { "field": "author", "label": "Author" },
+            { "field": "publishedDate", "label": "Published Date" }
+          ],
+          "actions": ["create", "edit", "delete"],
+          "drawerCreate": {
+            "title": "Create Post",
+            "size": "medium",
+            "graphqlHook": "useCreatePostMutation",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(1)"
+                }
+              },
+              {
+                "name": "content",
+                "type": "textarea",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(1)"
+                }
+              },
+              {
+                "name": "publishedDate",
+                "type": "date",
+                "validation": {
+                  "zodString": "z.string().optional()"
+                }
+              }
+            ]
+          },
+          "drawerUpdate": {
+            "title": "Update Post",
+            "size": "medium",
+            "graphqlHook": "useUpdatePostMutation",
+            "fields": [
+              {
+                "name": "title",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(1)"
+                }
+              },
+              {
+                "name": "content",
+                "type": "textarea",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(1)"
+                }
+              },
+              {
+                "name": "publishedDate",
+                "type": "date",
+                "validation": {
+                  "zodString": "z.string().optional()"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

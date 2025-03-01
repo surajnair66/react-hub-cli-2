@@ -1,0 +1,68 @@
+import { fromPromise } from '@apollo/client';
+import { onError } from '@apollo/client/link/error';
+import { authState } from '../../vars/auth';
+import { client } from './apolloConfig';
+
+export const GEN_TOKEN = gql(`
+  mutation GenerateAccessToken($refreshToken: String!) {
+    generateAccessToken(refreshToken: $refreshToken) {
+      token
+    }
+  }
+  `);
+
+const logoutUser = () => {
+  localStorage.clear();
+  client.clearStore();
+  authState({
+    authenticated: false,
+    loading: false,
+    role: undefined,
+    userDetails: null,
+  });
+};
+
+export const refreshAccessToken = async (): Promise<string | undefined> => {
+  try {
+    const refreshToken = localStorage.getItem('refresh_token') ?? '';
+
+    const response = await client.mutate({
+      mutation: GEN_TOKEN,
+      variables: {
+        refreshToken: refreshToken,
+      },
+    });
+    const data = response.data?.generateAccessToken.token ?? '';
+    localStorage.setItem('accessToken', data);
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw new Error('Refresh token failed');
+  }
+};
+
+const errorLink = onError(({ graphQLErrors, operation, forward }) => {
+  if (operation.operationName === 'ResendVerifyOtp') return;
+  if (graphQLErrors) {
+    for (const err of graphQLErrors) {
+      if (['UNAUTHENTICATED'].includes(err.extensions.code as string)) {
+        return fromPromise(refreshAccessToken().catch(() => logoutUser()))
+          .filter((value) => Boolean(value))
+          .flatMap((accessToken) => {
+            const oldHeaders = operation.getContext().headers;
+            // modify the operation context with a new token
+            operation.setContext({
+              headers: {
+                ...oldHeaders,
+                authorization: `Bearer ${accessToken}`,
+              },
+            });
+            // retry the request, returning the new observable
+            return forward(operation);
+          });
+      }
+    }
+  }
+});
+
+export default errorLink;

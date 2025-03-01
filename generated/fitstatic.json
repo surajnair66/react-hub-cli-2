@@ -1,0 +1,649 @@
+{
+  "app": {
+    "name": "fitness-trainer-hub",
+    "description": "A platform connecting fitness trainers with customers",
+    "author": "Hubspire",
+    "branding": {
+      "brandName": "FitConnect",
+      "primaryColor": "#38b2ac",
+      "secondaryColor": "#f0f2f5",
+      "logo": "https://www.hubspire.com/wp-content/uploads/2024/06/logo-nu.svg"
+    },
+    "apiEndpoint": "https://api-dev.fitstatic.com"
+  },
+  "modules": [
+    {
+      "name": "auth",
+      "pages": [
+        {
+          "type": "EmailPassword",
+          "name": "LoginPage",
+          "route": "/login",
+          "isPrivate": false,
+          "api": [
+            {
+              "type": "login",
+              "graphqlHook": "useLoginMutation",
+              "queryString": "mutation Login($data: LoginInput!) { login(data: $data) { refreshToken accessToken } }",
+              "responseType": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": { "type": "string" },
+                  "accessToken": { "type": "string" }
+                }
+              }
+            },
+            {
+              "type": "currentUser",
+              "graphqlHook": "useGetCurrentUserLazyQuery",
+              "queryString": "query GetCurrentUser { getCurrentUser { _id firstName lastName profileImage email role } }"
+            }
+          ]
+        },
+        {
+          "name": "ForgotPasswordPage",
+          "type": "ForgotPassword",
+          "route": "/forgot-password",
+          "isPrivate": false,
+          "api": [
+            {
+              "type": "forgotPassword",
+              "graphqlHook": "useForgetPasswordMutation",
+              "queryString": "mutation ForgetPassword($email: EmailAddress!) { forgetPassword(email: $email) { status message } }"
+            }
+          ],
+          "fields": [
+            {
+              "name": "email",
+              "type": "email",
+              "required": true,
+              "validation": {
+                "zodString": "z.string().email()"
+              }
+            }
+          ]
+        },
+        {
+          "name": "ResetPasswordPage",
+          "type": "ResetPassword",
+          "route": "/reset-password",
+          "isPrivate": false,
+          "api": [
+            {
+              "type": "resetPassword",
+              "graphqlHook": "useResetPasswordMutation",
+              "queryString": "mutation ResetPassword($type: ResetPasswordType!, $resetTicket: String!, $newPassword: Password!) { resetPassword(type: $type, resetTicket: $resetTicket, newPassword: $newPassword) { status message } }"
+            }
+          ],
+          "fields": [
+            {
+              "name": "password",
+              "type": "password",
+              "required": true,
+              "validation": {
+                "minLength": 8,
+                "zodString": "z.string().min(8)"
+              }
+            },
+            {
+              "name": "confirmPassword",
+              "type": "password",
+              "required": true,
+              "validation": {
+                "zodString": "z.string().min(8)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "trainers",
+      "pages": [
+        {
+          "type": "Listing",
+          "name": "TrainerListPage",
+          "route": "/trainers",
+          "isPrivate": true,
+          "api": [
+            {
+              "type": "list",
+              "graphqlHook": "useGetAllTrainersQuery",
+              "queryString": "query GetAllTrainers($search: String, $filter: JSON, $sort: JSON, $limit: Int, $offset: Int) { getAllTrainers(search: $search, filter: $filter, sort: $sort, limit: $limit, offset: $offset) { _id firstName lastName email phoneNumber profileImage rate specializations { _id title } averageRating } getAllTrainersCount(search: $search, filter: $filter) }"
+            },
+            {
+              "type": "create",
+              "graphqlHook": "useCreateTrainerMutation",
+              "queryString": "mutation CreateTrainer($data: CreateUserInput!) { createTrainer(data: $data) { _id firstName lastName email phoneNumber } }"
+            },
+            {
+              "type": "update",
+              "graphqlHook": "useUpdateTrainerMutation",
+              "queryString": "mutation UpdateTrainer($data: UpdateUserInput!) { updateTrainer(data: $data) { _id firstName lastName email phoneNumber } }"
+            },
+            {
+              "type": "delete",
+              "graphqlHook": "useDeleteUserMutation",
+              "queryString": "mutation DeleteUser($_id: ID!, $reason: String) { deleteUser(_id: $_id, reason: $reason) { _id } }"
+            },
+            {
+              "type": "getById",
+              "graphqlHook": "useGetUserByIdQuery",
+              "queryString": "query GetUserById($_id: ID!) { getUserById(_id: $_id) { _id firstName lastName email phoneNumber profileImage about rate specializations { _id title } languages gender timezone } }"
+            }
+          ],
+          "columns": [
+            { "field": "_id", "label": "ID" },
+            { "field": "firstName", "label": "First Name" },
+            { "field": "lastName", "label": "Last Name" },
+            { "field": "email", "label": "Email" },
+            { "field": "phoneNumber", "label": "Phone" },
+            { "field": "rate", "label": "Hourly Rate" },
+            { "field": "averageRating", "label": "Rating" }
+          ],
+          "actions": ["create", "edit", "delete", "view"],
+          "drawerCreate": {
+            "title": "Create Trainer",
+            "size": "large",
+            "graphqlHook": "useCreateTrainerMutation",
+            "fields": [
+              {
+                "name": "firstName",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(2).max(30)"
+                }
+              },
+              {
+                "name": "lastName",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(2).max(30)"
+                }
+              },
+              {
+                "name": "email",
+                "type": "email",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().email()"
+                }
+              },
+              {
+                "name": "phoneNumber",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(10)"
+                }
+              },
+              {
+                "name": "password",
+                "type": "password",
+                "required": true,
+                "validation": {
+                  "minLength": 8,
+                  "zodString": "z.string().min(8)"
+                }
+              },
+              {
+                "name": "rate",
+                "type": "number",
+                "required": true,
+                "validation": {
+                  "zodString": "z.number().min(1)"
+                }
+              },
+              {
+                "name": "specializationIds",
+                "type": "multiSelect",
+                "required": true,
+                "validation": {
+                  "zodString": "z.array(z.string()).min(1)"
+                },
+                "options": {
+                  "hookName": "useGetAllSpecializationQuery",
+                  "queryString": "query GetAllSpecialization { getAllSpecialization { _id title } }",
+                  "labelKey": "title",
+                  "valueKey": "_id"
+                }
+              },
+              {
+                "name": "languages",
+                "type": "multiSelect",
+                "required": true,
+                "validation": {
+                  "zodString": "z.array(z.string()).min(1)"
+                },
+                "options": {
+                  "values": ["English", "Spanish", "French", "German", "Chinese", "Japanese", "Russian", "Arabic"]
+                }
+              },
+              {
+                "name": "about",
+                "type": "textarea",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(20).max(500)"
+                }
+              },
+              {
+                "name": "role",
+                "type": "hidden",
+                "defaultValue": "TRAINER"
+              }
+            ]
+          },
+          "drawerUpdate": {
+            "title": "Update Trainer",
+            "size": "large",
+            "graphqlHook": "useUpdateTrainerMutation",
+            "fields": [
+              {
+                "name": "_id",
+                "type": "hidden",
+                "required": true
+              },
+              {
+                "name": "firstName",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(2).max(30)"
+                }
+              },
+              {
+                "name": "lastName",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(2).max(30)"
+                }
+              },
+              {
+                "name": "email",
+                "type": "email",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().email()"
+                }
+              },
+              {
+                "name": "phoneNumber",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(10)"
+                }
+              },
+              {
+                "name": "rate",
+                "type": "number",
+                "required": true,
+                "validation": {
+                  "zodString": "z.number().min(1)"
+                }
+              },
+              {
+                "name": "specializationIds",
+                "type": "multiSelect",
+                "required": true,
+                "validation": {
+                  "zodString": "z.array(z.string()).min(1)"
+                },
+                "options": {
+                  "hookName": "useGetAllSpecializationQuery",
+                  "queryString": "query GetAllSpecialization { getAllSpecialization { _id title } }",
+                  "labelKey": "title",
+                  "valueKey": "_id"
+                }
+              },
+              {
+                "name": "languages",
+                "type": "multiSelect",
+                "required": true,
+                "validation": {
+                  "zodString": "z.array(z.string()).min(1)"
+                },
+                "options": {
+                  "values": ["English", "Spanish", "French", "German", "Chinese", "Japanese", "Russian", "Arabic"]
+                }
+              },
+              {
+                "name": "about",
+                "type": "textarea",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(20).max(500)"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "Detail",
+          "name": "TrainerDetailPage",
+          "route": "/trainers/:id",
+          "isPrivate": true,
+          "api": [
+            {
+              "type": "detail",
+              "graphqlHook": "useGetUserByIdQuery",
+              "queryString": "query GetUserById($_id: ID!) { getUserById(_id: $_id) { _id firstName lastName email phoneNumber profileImage about rate specializations { _id title } languages gender timezone country averageRating } }"
+            },
+            {
+              "type": "sessions",
+              "graphqlHook": "useGetAllSessionQuery",
+              "queryString": "query GetAllSession($filter: JSON, $sort: JSON, $limit: Int, $offset: Int) { getAllSession(filter: $filter, sort: $sort, limit: $limit, offset: $offset) { _id traineeId sessionStartTime sessionEndTime sessionStatus traineeIdUser { firstName lastName } } }"
+            }
+          ],
+          "sections": [
+            {
+              "title": "Personal Information",
+              "fields": [
+                { "label": "First Name", "field": "firstName" },
+                { "label": "Last Name", "field": "lastName" },
+                { "label": "Email", "field": "email" },
+                { "label": "Phone", "field": "phoneNumber" },
+                { "label": "Country", "field": "country" },
+                { "label": "Timezone", "field": "timezone" },
+                { "label": "Gender", "field": "gender" }
+              ]
+            },
+            {
+              "title": "Professional Information",
+              "fields": [
+                { "label": "Hourly Rate", "field": "rate" },
+                { "label": "About", "field": "about" },
+                { "label": "Languages", "field": "languages", "type": "tags" },
+                { "label": "Rating", "field": "averageRating", "type": "rating" },
+                { "label": "Specializations", "field": "specializations", "type": "tagList", "config": { "labelKey": "title" } }
+              ]
+            }
+          ],
+          "relatedData": [
+            {
+              "title": "Recent Sessions",
+              "type": "table",
+              "dataKey": "sessions",
+              "columns": [
+                { "field": "_id", "label": "ID" },
+                { "field": "sessionStartTime", "label": "Start Time", "type": "datetime" },
+                { "field": "sessionEndTime", "label": "End Time", "type": "datetime" },
+                { "field": "sessionStatus", "label": "Status" },
+                { "field": "traineeIdUser.firstName", "label": "Client First Name" },
+                { "field": "traineeIdUser.lastName", "label": "Client Last Name" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "customers",
+      "pages": [
+        {
+          "type": "Listing",
+          "name": "CustomerListPage",
+          "route": "/customers",
+          "isPrivate": true,
+          "api": [
+            {
+              "type": "list",
+              "graphqlHook": "useGetAllCustomersQuery",
+              "queryString": "query GetAllCustomers($search: String, $filter: JSON, $sort: JSON, $limit: Int, $offset: Int) { getAllCustomers(search: $search, filter: $filter, sort: $sort, limit: $limit, offset: $offset) { _id firstName lastName email phoneNumber profileImage sessionBalance } getAllCustomersCount(search: $search, filter: $filter) }"
+            },
+            {
+              "type": "create",
+              "graphqlHook": "useCreateCustomerMutation",
+              "queryString": "mutation CreateCustomer($data: CreateUserInput!) { createCustomer(data: $data) { _id firstName lastName email phoneNumber } }"
+            },
+            {
+              "type": "update",
+              "graphqlHook": "useUpdateCustomerMutation",
+              "queryString": "mutation UpdateCustomer($data: UpdateUserInput!) { updateCustomer(data: $data) { _id firstName lastName email phoneNumber } }"
+            },
+            {
+              "type": "delete",
+              "graphqlHook": "useDeleteUserMutation",
+              "queryString": "mutation DeleteUser($_id: ID!, $reason: String) { deleteUser(_id: $_id, reason: $reason) { _id } }"
+            },
+            {
+              "type": "getById",
+              "graphqlHook": "useGetUserByIdQuery",
+              "queryString": "query GetUserById($_id: ID!) { getUserById(_id: $_id) { _id firstName lastName email phoneNumber profileImage sessionBalance gender timezone fitnessGoals } }"
+            }
+          ],
+          "columns": [
+            { "field": "_id", "label": "ID" },
+            { "field": "firstName", "label": "First Name" },
+            { "field": "lastName", "label": "Last Name" },
+            { "field": "email", "label": "Email" },
+            { "field": "phoneNumber", "label": "Phone" },
+            { "field": "sessionBalance", "label": "Available Sessions" }
+          ],
+          "actions": ["create", "edit", "delete", "view"],
+          "drawerCreate": {
+            "title": "Create Customer",
+            "size": "large",
+            "graphqlHook": "useCreateCustomerMutation",
+            "fields": [
+              {
+                "name": "firstName",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(2).max(30)"
+                }
+              },
+              {
+                "name": "lastName",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(2).max(30)"
+                }
+              },
+              {
+                "name": "email",
+                "type": "email",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().email()"
+                }
+              },
+              {
+                "name": "phoneNumber",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(10)"
+                }
+              },
+              {
+                "name": "password",
+                "type": "password",
+                "required": true,
+                "validation": {
+                  "minLength": 8,
+                  "zodString": "z.string().min(8)"
+                }
+              },
+              {
+                "name": "gender",
+                "type": "select",
+                "required": true,
+                "options": {
+                  "values": ["MALE", "FEMALE", "NON_BINARY"]
+                }
+              },
+              {
+                "name": "fitnessGoals",
+                "type": "textarea",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(10).max(500)"
+                }
+              },
+              {
+                "name": "sessionBalance",
+                "type": "number",
+                "required": false,
+                "validation": {
+                  "zodString": "z.number().min(0).optional()"
+                }
+              },
+              {
+                "name": "role",
+                "type": "hidden",
+                "defaultValue": "TRAINEE"
+              }
+            ]
+          },
+          "drawerUpdate": {
+            "title": "Update Customer",
+            "size": "large",
+            "graphqlHook": "useUpdateCustomerMutation",
+            "fields": [
+              {
+                "name": "_id",
+                "type": "hidden",
+                "required": true
+              },
+              {
+                "name": "firstName",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(2).max(30)"
+                }
+              },
+              {
+                "name": "lastName",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(2).max(30)"
+                }
+              },
+              {
+                "name": "email",
+                "type": "email",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().email()"
+                }
+              },
+              {
+                "name": "phoneNumber",
+                "type": "text",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(10)"
+                }
+              },
+              {
+                "name": "gender",
+                "type": "select",
+                "required": true,
+                "options": {
+                  "values": ["MALE", "FEMALE", "NON_BINARY"]
+                }
+              },
+              {
+                "name": "fitnessGoals",
+                "type": "textarea",
+                "required": true,
+                "validation": {
+                  "zodString": "z.string().min(10).max(500)"
+                }
+              },
+              {
+                "name": "sessionBalance",
+                "type": "number",
+                "required": false,
+                "validation": {
+                  "zodString": "z.number().min(0).optional()"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "Detail",
+          "name": "CustomerDetailPage",
+          "route": "/customers/:id",
+          "isPrivate": true,
+          "api": [
+            {
+              "type": "detail",
+              "graphqlHook": "useGetUserByIdQuery",
+              "queryString": "query GetUserById($_id: ID!) { getUserById(_id: $_id) { _id firstName lastName email phoneNumber profileImage sessionBalance gender timezone fitnessGoals height weight heightType weightType } }"
+            },
+            {
+              "type": "sessions",
+              "graphqlHook": "useGetAllSessionQuery",
+              "queryString": "query GetAllSession($filter: JSON, $sort: JSON, $limit: Int, $offset: Int) { getAllSession(filter: $filter, sort: $sort, limit: $limit, offset: $offset) { _id trainerId sessionStartTime sessionEndTime sessionStatus trainerIdUser { firstName lastName } } }"
+            },
+            {
+              "type": "purchases",
+              "graphqlHook": "useGetAllPurchaseQuery",
+              "queryString": "query GetAllPurchase($filter: JSON, $sort: JSON, $limit: Int, $offset: Int) { getAllPurchase(filter: $filter, sort: $sort, limit: $limit, offset: $offset) { _id paymentDate amount sessionCount paymentMethod } }"
+            }
+          ],
+          "sections": [
+            {
+              "title": "Personal Information",
+              "fields": [
+                { "label": "First Name", "field": "firstName" },
+                { "label": "Last Name", "field": "lastName" },
+                { "label": "Email", "field": "email" },
+                { "label": "Phone", "field": "phoneNumber" },
+                { "label": "Gender", "field": "gender" },
+                { "label": "Timezone", "field": "timezone" }
+              ]
+            },
+            {
+              "title": "Fitness Information",
+              "fields": [
+                { "label": "Height", "field": "height", "type": "composite", "config": { "valueField": "height", "unitField": "heightType" } },
+                { "label": "Weight", "field": "weight", "type": "composite", "config": { "valueField": "weight", "unitField": "weightType" } },
+                { "label": "Goals", "field": "fitnessGoals", "type": "longText" },
+                { "label": "Available Sessions", "field": "sessionBalance" }
+              ]
+            }
+          ],
+          "relatedData": [
+            {
+              "title": "Sessions",
+              "type": "table",
+              "dataKey": "sessions",
+              "columns": [
+                { "field": "_id", "label": "ID" },
+                { "field": "sessionStartTime", "label": "Start Time", "type": "datetime" },
+                { "field": "sessionEndTime", "label": "End Time", "type": "datetime" },
+                { "field": "sessionStatus", "label": "Status" },
+                { "field": "trainerIdUser.firstName", "label": "Trainer First Name" },
+                { "field": "trainerIdUser.lastName", "label": "Trainer Last Name" }
+              ]
+            },
+            {
+              "title": "Purchases",
+              "type": "table",
+              "dataKey": "purchases",
+              "columns": [
+                { "field": "_id", "label": "ID" },
+                { "field": "paymentDate", "label": "Date", "type": "date" },
+                { "field": "amount", "label": "Amount", "type": "currency" },
+                { "field": "sessionCount", "label": "Sessions" },
+                { "field": "paymentMethod", "label": "Payment Method" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

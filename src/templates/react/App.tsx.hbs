@@ -1,0 +1,28 @@
+{{#if isAuthenticated}}
+import PageLoader from '@/components/pageLoader';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { Navigator } from '@/routes';
+import { authState } from '@/vars/auth';
+import { useReactiveVar } from '@apollo/client';
+
+function App() {
+  const { loading } = useReactiveVar(authState);
+  useCurrentUser();
+
+  if (loading) {
+    return <PageLoader />;
+  }
+  return <Navigator />;
+}
+
+export default App;
+
+{{else}}
+import { Navigator } from "@/routes";
+
+function App() {
+  return <Navigator />;
+}
+
+export default App;
+{{/if}}

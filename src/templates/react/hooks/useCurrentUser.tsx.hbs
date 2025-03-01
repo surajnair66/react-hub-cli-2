@@ -1,0 +1,32 @@
+import { useGetCurrentUserQuery } from '@/types/gql/generated';
+import { authState } from '@/vars/auth';
+import { userDetails } from '@/vars/userDetails';
+
+export const useCurrentUser = () => {
+  useGetCurrentUserQuery({
+    onCompleted: (res) => {
+      if (res) {
+        const user = res?.getCurrentUser;
+        userDetails({
+          _id: user?._id ?? '',
+          email: user?.email ?? '',
+          firstName: user?.firstName ?? '',
+          lastName: user?.lastName ?? '',
+          phoneNumber: '',
+          profileImage: user?.profileImage ?? '',
+        });
+        authState({
+          authenticated: true,
+          loading: false,
+        });
+      }
+    },
+    onError: () => {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      authState({ authenticated: false, loading: false, role: undefined });
+    },
+
+    fetchPolicy: 'network-only',
+  });
+};

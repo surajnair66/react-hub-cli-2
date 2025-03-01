@@ -1,0 +1,72 @@
+{
+  "name": "@hubspire/react-hub-cli",
+  "version": "1.0.0",
+  "description": "A CLI tool created by Hubspire for bootstraping React apps",
+  "author": "Hubspire",
+  "license": "MIT",
+  "private": false,
+  "engineStrict": true,
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "keywords": [
+    "react-hub-cli"
+  ],
+  "bin": {
+    "react-hub-cli": "dist/index.js"
+  },
+  "scripts": {
+    "commit": "git-cz",
+    "build": "tsc && tsup-node src/index.ts --minify",
+    "clean": "rm -rf dist",
+    "prepare": "husky",
+    "postbuild": "cp -R src/templates dist/templates"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-customizable"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint src/**/*.ts --fix-dry-run",
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@types/lodash": "^4.17.15",
+    "chalk": "^4.1.2",
+    "commander": "^12.1.0",
+    "execa": "^9.5.2",
+    "figlet": "^1.8.0",
+    "fs-extra": "^11.2.0",
+    "handlebars": "^4.7.8",
+    "inquirer": "^12.0.0",
+    "lodash": "^4.17.21",
+    "prettier": "^3.3.3"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.13.0",
+    "@types/figlet": "^1.7.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.7.7",
+    "@types/prettier": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
+    "@typescript-eslint/parser": "^8.10.0",
+    "commitizen": "^4.3.1",
+    "commitlint-config-gitmoji": "^2.3.1",
+    "cz-customizable": "^7.2.1",
+    "eslint": "^9.13.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^15.11.0",
+    "husky": "^9.1.6",
+    "tslib": "^2.8.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.3"
+  }
+}

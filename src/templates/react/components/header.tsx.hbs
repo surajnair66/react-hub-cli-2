@@ -1,0 +1,90 @@
+import { cn } from '@/lib/utils';
+import { userDetails } from '@/vars/userDetails';
+import { useReactiveVar } from '@apollo/client';
+import { LogOut, Pencil, User } from 'lucide-react';
+import { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+
+export default function Header() {
+  const userData = useReactiveVar(userDetails);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const dialogClose = () => {
+    setDialogOpen(false);
+  };
+
+  return (
+    <header className='h-[72px] bg-white fixed top-0 left-0 right-0 z-25 flex justify-between items-center py-4 px-4 shadow-md'>
+      <img src='{{logo}}' alt='ptls-logo' />
+      <div>
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <div
+              className={cn(
+                'bg-[#E9E9E9] flex items-center  rounded-[14px] gap-2 py-[7px] px-[10px]',
+              )}
+            >
+              <Avatar className={'h-6 w-6'}>
+                <AvatarImage src={userData?.profileImage} alt='name' />
+                <AvatarFallback className=' bg-gray-300'>
+                  {userData?.firstName.at(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div className={' font-semibold text-[14px] text-black'}>{userData?.firstName}</div>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => {}}>
+              <User className='mr-2 h-4 w-4' />
+              Edit Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {}}>
+              <Pencil className='mr-2 h-4 w-4' />
+              Change Password
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setDialogOpen(true);
+              }}
+            >
+              <LogOut className='mr-2 h-4 w-4' />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <Dialog open={dialogOpen} onOpenChange={dialogClose}>
+        <DialogContent className='sm:max-w-[425px] p-6'>
+          <DialogHeader>
+            <DialogTitle className='text-[#3f5595] text-3xl'>Logout?</DialogTitle>
+          </DialogHeader>
+          <h5 className='text-[#3f5595]'> Are you sure you want to logout ?</h5>
+          <DialogFooter>
+            <Button
+              id='cancel'
+              className='bg-[#1474f2] text-white hover:bg-[#427fcf] px-5 w-min'
+              onClick={dialogClose}
+            >
+              No
+            </Button>
+            <Button
+              id='savebtn'
+              className='bg-[#1474f2] text-white hover:bg-[#427fcf] px-5 w-min'
+              onClick={() => {}}
+            >
+              Yes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </header>
+  );
+}

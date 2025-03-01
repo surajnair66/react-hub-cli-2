@@ -1,0 +1,14 @@
+import { makeVar } from '@apollo/client';
+
+type userDetails =
+  | {
+      _id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      phoneNumber?: string;
+      profileImage: string;
+    }
+  | undefined;
+
+export const userDetails = makeVar<userDetails>(undefined);

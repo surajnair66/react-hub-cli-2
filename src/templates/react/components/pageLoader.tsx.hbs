@@ -1,0 +1,19 @@
+import { bouncy } from "ldrs";
+import { useEffect } from "react";
+
+interface PageLoaderProps {
+  size?: string;
+}
+
+const PageLoader: React.FC<PageLoaderProps> = ({ size }) => {
+  useEffect(() => {
+    bouncy.register();
+  }, []);
+  return (
+    <div className="h-screen w-screen flex items-center justify-center bg-[#F0F4F8]" data-testid="loader">
+      <l-bouncy size={size ?? "70"} speed="0.9" color="black"></l-bouncy>
+    </div>
+  );
+};
+
+export default PageLoader;

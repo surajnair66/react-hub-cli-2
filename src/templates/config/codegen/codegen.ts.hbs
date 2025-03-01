@@ -1,0 +1,29 @@
+import { CodegenConfig } from '@graphql-codegen/cli';
+import { loader } from './codegen-loader';
+
+const config: CodegenConfig = {
+  schema: [
+    {
+      'react-app': {
+        loader: loader as unknown as string,
+      },
+    },
+  ],
+  documents: ['src/**/*.{ts,tsx}'],
+  generates: {
+    './src/types/gql/generated.ts': {
+      // preset: 'client',
+      plugins: ['typescript', 'typescript-operations', 'typescript-react-apollo'],
+      presetConfig: {
+        gqlTagName: 'gql',
+      },
+      config: {
+        withHooks: true,
+        withMutationFn: true,
+      },
+    },
+  },
+  ignoreNoDocuments: true,
+};
+
+export default config;

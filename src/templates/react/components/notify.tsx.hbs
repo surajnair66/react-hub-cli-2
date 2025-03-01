@@ -1,0 +1,31 @@
+import { Toaster as Sonner, toast } from 'sonner';
+import React from 'react';
+
+type ToasterProps = React.ComponentProps<typeof Sonner>;
+
+const Toaster = ({ ...props }: ToasterProps) => {
+  return <Sonner className='toaster group' {...props} />;
+};
+
+export { Toaster };
+
+// show toast function
+interface ShowToastProps {
+  message?: string;
+  variant?: 'success' | 'error' | 'warning' | 'loading';
+}
+export const showToast = ({ message, variant }: ShowToastProps) => {
+  switch (variant) {
+    case 'success':
+      toast.success(message);
+      break;
+    case 'warning':
+      toast.warning(message);
+      break;
+    case 'error':
+      toast.error(message);
+      break;
+    default:
+      toast(message);
+  }
+};

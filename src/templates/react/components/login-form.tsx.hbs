@@ -1,0 +1,86 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeClosed } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
+import getRoutes from '@/routes/routePaths';
+import { z } from 'zod';
+
+interface LoginFormProps {
+  onSubmit: (data: LoginProps) => void;
+  loading: boolean;
+}
+
+const LoginSchema = z.object({
+  email: z.string().min(1, { message: 'Email is required.' }).email('This is not a valid email.'),
+  password: z.string().min(8, { message: 'Password is required' }).max(32),
+});
+
+export type LoginProps = z.infer<typeof LoginSchema>;
+
+export function LoginForm({ onSubmit, loading }: LoginFormProps) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginProps>({ resolver: zodResolver(LoginSchema) });
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className='grid gap-6'>
+        <div className='grid gap-2'>
+          <Label className='flex' htmlFor='email'>
+            Email
+          </Label>
+          <div>
+            <Input id='email' type='email' placeholder='m@example.com' {...register('email')} />
+            {errors.email && <span className='text-xs text-red-600'>{errors.email.message}</span>}
+          </div>
+        </div>
+        <div className='grid gap-2'>
+          <div className='flex items-center'>
+            <Label htmlFor='password'>Password</Label>
+            <Link
+              to={getRoutes.forgotPassword}
+              className='ml-auto text-sm underline-offset-4 hover:underline'
+            >
+              Forgot your password?
+            </Link>
+          </div>
+          <div className='relative'>
+            <Input
+              id='password'
+              type={showPassword ? 'text' : 'password'}
+              {...register('password')}
+            />
+            {errors.password && (
+              <span className='text-xs text-red-600'>{errors.password.message}</span>
+            )}
+            <div className='gap-4 absolute right-[0px] top-[8px] flex justify-between items-center px-3 focus:outline-none'>
+              <button
+                data-testid='visibility-testid'
+                className='!hover:bg-none !p-0 !hover:border-none'
+                onClick={() => setShowPassword(!showPassword)}
+                type='button'
+              >
+                {showPassword ? (
+                  <Eye className='h-5 w-5 text-gray-400' />
+                ) : (
+                  <EyeClosed className='h-5 w-5 text-gray-400' />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+        <Button type='submit' className='w-full' loading={loading}>
+          Login
+        </Button>
+      </div>
+    </form>
+  );
+}

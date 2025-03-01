@@ -1,0 +1,14 @@
+import { makeVar } from "@apollo/client";
+
+export type AuthType = {
+  loading: boolean;
+  authenticated: boolean;
+  role?: string | undefined;
+  userDetails?: undefined | null;
+};
+
+export const authState = makeVar<AuthType>({
+  loading: true,
+  authenticated: false,
+  role: undefined,
+});

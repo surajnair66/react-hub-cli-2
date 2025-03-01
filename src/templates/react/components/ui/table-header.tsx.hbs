@@ -1,0 +1,104 @@
+import { cn } from '@/lib/utils';
+import { cx } from 'class-variance-authority';
+import { Search } from 'lucide-react';
+import { Button } from './button';
+import { Input } from './input';
+import { Skeleton } from './skeleton';
+
+export type ColumnType = {
+  title: string;
+  id?: string;
+  className?: string;
+  align?: 'left' | 'center' | 'right' | 'justify' | 'char';
+  isVisible?: boolean;
+};
+
+type FilterValue = string | number | undefined;
+
+export interface SelectProps {
+  id: string;
+  label: string;
+  fieldName: string;
+  type?: 'select' | 'date';
+  values?: {
+    text: string;
+    value: string;
+  }[];
+  filterValues?: {
+    [key: string]: FilterValue;
+  };
+}
+
+export interface HeaderButton {
+  id: string;
+  text: string;
+  onClick: () => void;
+  icon?: string;
+}
+
+interface TableHeaderProps {
+  id: string;
+  loading?: boolean;
+  title?: string;
+  searchPlaceholder?: string;
+  headerButtons?: HeaderButton[];
+  onSearch: (text: string) => void;
+  filters?: SelectProps[];
+  filterValues?: {
+    [key: string]: FilterValue;
+  };
+  searchValue: string | undefined;
+  toggleView?: boolean;
+}
+
+export const CustomTableHeader: React.FC<TableHeaderProps> = ({
+  //   id,
+  loading,
+  title,
+  searchPlaceholder,
+  headerButtons,
+  searchValue,
+  filters,
+  toggleView = true,
+  onSearch,
+}) => {
+  return (
+    <>
+      <div className={cx('flex items-center justify-between w-full')}>
+        <div className='flex items-center gap-4'>
+          <div className='font-semibold text-[24px]'>
+            {loading ? <Skeleton className='h-9 w-[200px]' /> : title}
+          </div>
+        </div>
+        <div className={cn(!toggleView && 'pb-5', 'flex gap-3')}>
+          <div className='flex w-[388px] relative gap-3 shrink-0'>
+            <Button id='search' variant='ghost' size='icon' className='absolute'>
+              <Search />
+            </Button>
+            <Input
+              id='search'
+              type='search'
+              className={cn('bg-white w-full rounded-full pl-10', filters ? 'px-10' : 'pr-5')}
+              placeholder={searchPlaceholder ?? 'Search'}
+              onChange={(e) => onSearch(e.target.value)}
+              value={searchValue ?? ''}
+            />
+          </div>
+          <div className='flex items-center gap-2'>
+            {(headerButtons || []).map((headerButton) => (
+              <Button
+                key={headerButton?.id}
+                className='shrink-0 rounded-[12px] flex items-center gap-3'
+                id={headerButton?.id}
+                onClick={headerButton?.onClick}
+              >
+                {headerButton?.text}
+                {headerButton?.icon && <img src={headerButton.icon} alt='header icon' />}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};

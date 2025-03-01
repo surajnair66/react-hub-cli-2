@@ -1,0 +1,193 @@
+{
+  "app": {
+    "name": "React App",
+    "description": "A React app created by Hubspire",
+    "author": "Hubspire"
+  },
+  "modules": [
+    {
+      "name": "login",
+      "type": "EmailPassword",
+      "graphqlHook": "useLoginMutation",
+      "responseType": {
+        "tokenField": "token",
+        "refreshTokenField": "refreshToken",
+        "expiresInField": "expiresIn"
+      },
+      "auth": {
+        "forgotPassword": {
+          "name": "ForgotPasswordPage",
+          "route": "/auth/forgot-password",
+          "graphqlHook": "useForgotPasswordMutation",
+          "fields": [
+            {
+              "name": "email",
+              "type": "email",
+              "required": true,
+              "validation": {
+                "zodString": "z.string().email()"
+              }
+            }
+          ]
+        }
+      },
+      "users": {
+        "entityName": "User",
+        "pages": [
+          {
+            "type": "listing",
+            "name": "UserListPage",
+            "route": "/users",
+            "protected": true,
+            "graphqlHook": "useGetAllUsersQuery",
+            "returnTypeName": "GetAllUsersQueryPayload",
+            "columns": [
+              { "field": "id", "label": "User ID" },
+              { "field": "username", "label": "Username" },
+              { "field": "email", "label": "Email" }
+            ],
+            "actions": ["create", "edit", "delete"],
+            "drawerCreate": {
+              "title": "Create User",
+              "size": "medium",
+              "graphqlHook": "useCreateUserMutation",
+              "fields": [
+                {
+                  "name": "username",
+                  "type": "text",
+                  "required": true,
+                  "validation": {
+                    "pattern": "^[a-zA-Z0-9_]+$",
+                    "zodString": "z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/)"
+                  }
+                },
+                {
+                  "name": "email",
+                  "type": "email",
+                  "required": true,
+                  "validation": {
+                    "pattern": "^\\S+@\\S+\\.\\S+$",
+                    "zodString": "z.string().email()"
+                  }
+                },
+                {
+                  "name": "password",
+                  "type": "password",
+                  "required": true,
+                  "validation": {
+                    "minLength": 6,
+                    "zodString": "z.string().min(6)"
+                  }
+                }
+              ]
+            },
+            "drawerUpdate": {
+              "title": "Update User",
+              "size": "medium",
+              "graphqlHook": "useUpdateUserMutation",
+              "fields": [
+                {
+                  "name": "username",
+                  "type": "text",
+                  "required": true,
+                  "validation": {
+                    "maxLength": 30,
+                    "zodString": "z.string().max(30)"
+                  }
+                },
+                {
+                  "name": "email",
+                  "type": "email",
+                  "required": true,
+                  "validation": {
+                    "zodString": "z.string().email()"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "posts": {
+        "entityName": "Post",
+        "pages": [
+          {
+            "type": "listing",
+            "name": "PostListPage",
+            "route": "/posts",
+            "protected": false,
+            "graphqlHook": "useGetAllPostsQuery",
+            "returnTypeName": "GetAllPostsQueryPayload",
+            "columns": [
+              { "field": "id", "label": "Post ID" },
+              { "field": "title", "label": "Title" },
+              { "field": "author", "label": "Author" },
+              { "field": "publishedDate", "label": "Published Date" }
+            ],
+            "actions": ["create", "edit", "delete"],
+            "drawerCreate": {
+              "title": "Create Post",
+              "size": "medium",
+              "graphqlHook": "useCreatePostMutation",
+              "fields": [
+                {
+                  "name": "title",
+                  "type": "text",
+                  "required": true,
+                  "validation": {
+                    "zodString": "z.string().min(1)"
+                  }
+                },
+                {
+                  "name": "content",
+                  "type": "textarea",
+                  "required": true,
+                  "validation": {
+                    "zodString": "z.string().min(1)"
+                  }
+                },
+                {
+                  "name": "publishedDate",
+                  "type": "date",
+                  "validation": {
+                    "zodString": "z.string().optional()"
+                  }
+                }
+              ]
+            },
+            "drawerUpdate": {
+              "title": "Update Post",
+              "size": "medium",
+              "graphqlHook": "useUpdatePostMutation",
+              "fields": [
+                {
+                  "name": "title",
+                  "type": "text",
+                  "required": true,
+                  "validation": {
+                    "zodString": "z.string().min(1)"
+                  }
+                },
+                {
+                  "name": "content",
+                  "type": "textarea",
+                  "required": true,
+                  "validation": {
+                    "zodString": "z.string().min(1)"
+                  }
+                },
+                {
+                  "name": "publishedDate",
+                  "type": "date",
+                  "validation": {
+                    "zodString": "z.string().optional()"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
