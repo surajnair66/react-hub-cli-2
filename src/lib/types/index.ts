@@ -22,9 +22,10 @@ export type TValidation = {
 
 export type TField = {
   name: string;
-  type: "text" | "email" | "password" | "textarea" | "date";
+  type: "text" | "email" | "password" | "textarea" | "date" | "hidden" | "number";
   required?: boolean;
   validation: TValidation;
+  options?: string[];
 };
 
 export type TColumn = {
@@ -51,7 +52,7 @@ export type TResponseType = {
 };
 
 export type TAuthAPIType = "login" | "currentUser";
-export type TListingAPIType = "list" | "create" | "update" | "delete";
+export type TListingAPIType = "list" | "create" | "update" | "delete" | "getById";
 export type TAPIType = TAuthAPIType | TListingAPIType;
 
 export type TAPI = {

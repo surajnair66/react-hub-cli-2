@@ -1,0 +1,274 @@
+import { debounce } from 'lodash';
+import { EditIcon, Ellipsis, PlusIcon, TrashIcon, StarIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { CreateDrawer } from './CreateDrawer';
+import { EditDrawer } from './EditDrawer';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { CustomTable } from '@/components/ui/table';
+import { showToast } from '@/components/notify';
+import getRoutes from '@/routes/routePaths';
+import { {{getHook}}, {{createHook}}, {{updateHook}}, {{deleteHook}} } from '@/types/gql/generated';
+
+{{#if detailPage}}
+import { {{getByIdHook}} } from './graphql';
+{{/if}}
+
+export default function {{componentName}}() {
+  const navigate = useNavigate();
+  const [vars, setVars] = useState({
+    search: '',
+    limit: 10,
+    offset: 0,
+    filter: {},
+    sort: { _id: 1 },
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [pageNo, setPageNo] = useState(1);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [type, setType] = useState<'add' | 'edit'>('add');
+  const [selected{{singularName}}, setSelected{{singularName}}] = useState<any>(null);
+
+  // Data fetching query
+  const {
+    data,
+    loading: isLoading,
+    refetch,
+  } = {{getHook}}({
+    variables: {
+      search: vars.search,
+      filter: vars.filter,
+      sort: vars.sort,
+      limit: vars.limit,
+      offset: vars.offset,
+    },
+  });
+
+  // Create mutation
+  const [create{{singularName}}, { loading: createLoading }] = {{createHook}}({
+    onCompleted: () => {
+      showToast({ message: '{{singularName}} created successfully', variant: 'success' });
+      setDrawerOpen(false);
+      refetch();
+    },
+    onError: (error) => {
+      showToast({ message: `Error creating {{singularName}}: ${error.message}`, variant: 'error' });
+    },
+  });
+
+  // Update mutation
+  const [update{{singularName}}, { loading: updateLoading }] = {{updateHook}}({
+    onCompleted: () => {
+      showToast({ message: '{{singularName}} updated successfully', variant: 'success' });
+      setDrawerOpen(false);
+      refetch();
+    },
+    onError: (error) => {
+      showToast({ message: `Error updating {{singularName}}: ${error.message}`, variant: 'error' });
+    },
+  });
+
+  // Delete mutation
+  const [delete{{singularName}}, { loading: deleteLoading }] = {{deleteHook}}({
+    onCompleted: () => {
+      showToast({ message: '{{singularName}} deleted successfully', variant: 'success' });
+      refetch();
+    },
+    onError: (error) => {
+      showToast({ message: `Error deleting {{singularName}}: ${error.message}`, variant: 'error' });
+    },
+  });
+
+  {{#if detailPage}}
+  // Get by ID query for detail view
+  const [get{{singularName}}ById] = {{getByIdHook}}();
+  {{/if}}
+
+  const totalCount = data?.getAll{{pluralName}}Count || 0;
+  const {{pluralNameCamel}} = data?.getAll{{pluralName}} || [];
+
+  const handleSearch = debounce((value: string) => {
+    setSearchTerm(value);
+    setVars({ ...vars, search: value, offset: 0 });
+    setPageNo(1);
+  }, 400);
+
+  const handlePageChange = (page: number) => {
+    setPageNo(page);
+    setVars({
+      ...vars,
+      offset: (page - 1) * vars.limit,
+    });
+  };
+
+  const handleEdit = (item: any) => {
+    setSelected{{singularName}}(item);
+    setType('edit');
+    setDrawerOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this {{singularName}}?')) {
+      delete{{singularName}}({
+        variables: {
+          _id: id
+        }
+      });
+    }
+  };
+
+  const handleAdd = () => {
+    setSelected{{singularName}}(null);
+    setType('add');
+    setDrawerOpen(true);
+  };
+
+  // Function to get empty text based on data
+  const getEmptyText = () => {
+    if ({{pluralNameCamel}}.length === 0) {
+      return 'No {{pluralName}} Available';
+    }
+    return null;
+  };
+
+  const getInitialData = () =>  selected{{singularName}};
+
+  {{#if detailPage}}
+  const handleView = (id: string) => {
+    navigate(getRoutes.{{detailRouteName}}.replace(':id', id));
+  };
+  {{/if}}
+
+  const tableData = () => {
+    return {{pluralNameCamel}}.map((item: any, index: number) => ({
+      {{#each columns}}
+      {{#if this.displayInTable}}
+      '{{this.label}}': {
+        component: {{{this.customComponent}}},
+        align: '{{this.align}}',
+      },
+      {{/if}}
+      {{/each}}
+      ACTION: {
+        component: (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                id={`menu-${index}`}
+                data-testid={`menu-${index}`}
+                variant='ghost'
+                size='icon'
+                className='hover:bg-slate-200'
+              >
+                <Ellipsis className='w-5 h-5' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuGroup>
+                {{#if detailPage}}
+                <DropdownMenuItem
+                  data-testid={`view-{{singularNameCamel}}-${index}`}
+                  onClick={() => handleView(item._id)}
+                >
+                  <PlusIcon className='w-5 h-5' /> &nbsp; View
+                </DropdownMenuItem>
+                {{/if}}
+                {{#if hasEditAction}}
+                <DropdownMenuItem
+                  data-testid={`edit-{{singularNameCamel}}-${index}`}
+                  onClick={() => handleEdit(item)}
+                >
+                  <EditIcon className='w-5 h-5' /> &nbsp; Edit
+                </DropdownMenuItem>
+                {{/if}}
+                {{#if hasDeleteAction}}
+                <DropdownMenuItem
+                  data-testid={`delete-{{singularNameCamel}}-${index}`}
+                  onClick={() => handleDelete(item._id)}
+                  className="text-red-600"
+                >
+                  <TrashIcon className='w-5 h-5' /> &nbsp; Delete
+                </DropdownMenuItem>
+                {{/if}}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+        align: 'center',
+      },
+    }));
+  };
+
+  return (
+    <div className='w-full h-full p-10'>
+      <div className='pb-24'>
+        <CustomTable
+          data={tableData()}
+          loading={isLoading}
+          pagination={true}
+          onPageChange={handlePageChange}
+          totalCount={totalCount}
+          pageNo={pageNo}
+          noOfRecords={vars.limit}
+          emptyText={getEmptyText()}
+          onSearch={handleSearch}
+          searchTerm={searchTerm}
+          title='{{title}}'
+          searchPlaceholder='Search {{pluralName}}...'
+          headerButtons={[
+            {{#if hasCreateAction}}
+            {
+              id: 'add_{{singularNameCamel}}',
+              text: 'Add {{singularName}}',
+              onClick: handleAdd,
+            },
+            {{/if}}
+          ]}
+        />
+      </div>
+
+      {/* Create Drawer */}
+      {drawerOpen && type === 'add' && (
+        <CreateDrawer 
+          isOpen={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          onSubmit={(data) => {
+            create{{singularName}}({
+              variables: {
+                data
+              }
+            });
+          }}
+          isLoading={createLoading}
+          drawerTitle={`Create {{singularName}}`}
+        />
+      )}
+
+      {/* Edit Drawer */}
+      {drawerOpen && type === 'edit' && (
+        <EditDrawer 
+          isOpen={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          initialData={getInitialData()}
+          onSubmit={(data) => {
+            update{{singularName}}({
+              variables: {
+                data
+              }
+            });
+          }}
+          isLoading={updateLoading}
+          drawerTitle={`Update {{singularName}}`}
+        />
+      )}
+    </div>
+  );
+}

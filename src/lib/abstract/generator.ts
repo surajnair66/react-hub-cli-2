@@ -9,17 +9,18 @@ import { WORK_DIR } from "../..";
 const execPromise = promisify(exec);
 
 export abstract class AbstractGenerator {
-  protected async convertTemplate(hbsPath: string, newFilePath: string, data?: Record<string, any>) {
-    const commonPrettierConfig = {
-      printWidth: 150,
-      tabWidth: 2,
-      singleQuote: true,
-      jsxSingleQuote: true,
-    };
+  constructor() {
+    this.registerHandlebarsHelpers();
+  }
 
+  private registerHandlebarsHelpers() {
     handlebars.registerHelper("properCase", function (str) {
       if (!str || typeof str !== "string") return "";
       return str.charAt(0).toUpperCase() + str.slice(1);
+    });
+
+    handlebars.registerHelper("eq", function (a, b) {
+      return a === b;
     });
 
     handlebars.registerHelper("graphqlQuery", function (queryString) {
@@ -27,6 +28,15 @@ export abstract class AbstractGenerator {
       // Return the query string as-is, without any processing
       return queryString;
     });
+  }
+
+  protected async convertTemplate(hbsPath: string, newFilePath: string, data?: Record<string, any>) {
+    const commonPrettierConfig = {
+      printWidth: 150,
+      tabWidth: 2,
+      singleQuote: true,
+      jsxSingleQuote: true,
+    };
 
     const template = handlebars.compile(fs.readFileSync(WORK_DIR + hbsPath, "utf-8"));
     const fileExtension = newFilePath.split(".").pop();

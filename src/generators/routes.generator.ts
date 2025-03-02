@@ -113,7 +113,9 @@ export class RoutesGenerator extends AbstractGenerator {
   }
 
   private async configureSideMenu(): Promise<void> {
-    const routeNames = this.routes.filter((route) => route.isPrivate && route.type !== "Detail").map((route) => camelCase(route.path.split("/")[1]));
+    const routeNames = this.routes
+      .filter((route) => route.isPrivate && route.type !== "Detail")
+      .map((route) => camelCase(route.path.split("/")[1]));
 
     await Promise.all([
       this.convertTemplate("/templates/react/components/header.tsx.hbs", "src/components/header.tsx", { logo: this.logo || "" }),
