@@ -58,7 +58,6 @@ export abstract class AbstractGenerator {
         parser: "json",
         ...commonPrettierConfig,
       });
-      console.log("formattedData", formattedData);
       fs.outputFileSync(newFilePath, formattedData);
     } else {
       fs.outputFileSync(newFilePath, template(data || {}));
@@ -131,5 +130,94 @@ export abstract class AbstractGenerator {
 
   protected async codgenCompile(): Promise<void> {
     execSync("npm run compile");
+  }
+
+  protected linearRgbToOklab(linearR: number, linearG: number, linearB: number): { L: number; a: number; b: number } {
+    // Convert linear RGB to XYZ using sRGB matrix
+    const X = 0.4122214708 * linearR + 0.5363325363 * linearG + 0.0514459929 * linearB;
+    const Y = 0.2119034982 * linearR + 0.6806995451 * linearG + 0.1073969566 * linearB;
+    const Z = 0.0883024619 * linearR + 0.2817188376 * linearG + 0.6299787005 * linearB;
+
+    // Convert XYZ to OKLAB
+    const l = Math.cbrt(X);
+    const m = Math.cbrt(Y);
+    const s = Math.cbrt(Z);
+
+    return {
+      L: 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+      a: 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+      b: 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+    };
+  }
+
+  protected srgbToLinear(x: number): number {
+    if (x <= 0.04045) {
+      return x / 12.92;
+    } else {
+      return Math.pow((x + 0.055) / 1.055, 2.4);
+    }
+  }
+
+  protected hexToOklch(hex: string): string {
+    if (!hex) {
+      throw new Error("Hex color string cannot be empty");
+    }
+
+    // Remove the # if present
+    hex = hex.replace(/^#/, "");
+
+    // Handle shorthand hex (#RGB or #RGBA)
+    if (hex.length === 3 || hex.length === 4) {
+      hex = hex
+        .split("")
+        .map((char) => char + char)
+        .join("");
+    }
+
+    // Validate hex string
+    if (!/^[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/.test(hex)) {
+      throw new Error("Invalid hex color format");
+    }
+
+    // Parse the hex value to RGB (ignore alpha if present)
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+    // Convert sRGB to linear RGB
+    const linearR = this.srgbToLinear(r);
+    const linearG = this.srgbToLinear(g);
+    const linearB = this.srgbToLinear(b);
+
+    // Convert linear RGB to OKLAB
+    const { L, a, b: bValue } = this.linearRgbToOklab(linearR, linearG, linearB);
+
+    // Convert OKLAB to OKLCH
+    const C = Math.sqrt(a * a + bValue * bValue);
+
+    // Handle achromatic colors (near zero chroma)
+    // For colors very close to neutral gray, hue is meaningless and can be unstable
+    let h = 0;
+    if (C > 0.0001) {
+      h = Math.atan2(bValue, a) * (180 / Math.PI);
+
+      // Ensure hue is in the range [0, 360)
+      if (h < 0) {
+        h += 360;
+      }
+    }
+
+    // Round values to avoid floating point precision issues
+    // This is particularly important for values that should be zero
+    const roundedL = Math.abs(L) < 1e-10 ? 0 : L;
+    const roundedC = Math.abs(C) < 1e-10 ? 0 : C;
+
+    const color = {
+      l: roundedL,
+      c: roundedC,
+      h,
+    };
+
+    return `oklch(${color.l.toFixed(4)} ${color.c.toFixed(4)} ${color.h.toFixed(2)}deg)`;
   }
 }

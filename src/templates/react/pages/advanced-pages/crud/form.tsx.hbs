@@ -1,0 +1,235 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { showToast } from '@/components/notify';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+interface {{singularName}}FormProps {
+  type: 'add' | 'edit';
+  {{singularNameCamel}}: {
+    {{#each fields}}
+    {{#unless this.hidden}}
+    {{this.name}}?: {{#if (eq this.type "number")}}number{{else}}string{{/if}};
+    {{/unless}}
+    {{/each}}
+    _id?: string;
+  };
+  onClose?: () => void;
+  refetch?: () => void;
+  onSubmit: (data: any) => void;
+  isLoading: boolean;
+}
+
+// Create schema for form validation
+const {{singularName}}Schema = z.object({
+  {{#each fields}}
+  {{#unless this.hidden}}
+  {{this.name}}: {{{this.zodString}}},
+  {{/unless}}
+  {{/each}}
+  {{#if hasPasswordFields}}
+  confirmPassword: z.string().min(8, { message: 'Password confirmation is required' }),
+  {{/if}}
+}){{#if hasPasswordFields}}.refine((data) => data.password === data.confirmPassword, {
+  message: 'Password and Confirm Password do not match',
+  path: ['confirmPassword'],
+}){{/if}};
+
+export const {{singularName}}Form: React.FC<{{singularName}}FormProps> = ({ 
+  type, 
+  {{singularNameCamel}}, 
+  onClose, 
+  refetch,
+  onSubmit,
+  isLoading 
+}) => {
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver({{singularName}}Schema),
+    defaultValues: {
+      {{#each fields}}
+      {{#unless this.hidden}}
+      {{this.name}}: {{../singularNameCamel}}?.{{this.name}} ?? {{#if this.defaultValue}}'{{this.defaultValue}}'{{else}}''{{/if}},
+      {{/unless}}
+      {{/each}}
+    },
+  });
+
+  {{#each passwordFields}}
+  const [show{{properCase this.name}}, setShow{{properCase this.name}}] = useState(false);
+  {{/each}}
+
+  const handleFormSubmit = (data: any) => {
+    if (type === 'edit' && {{singularNameCamel}}?._id) {
+      data._id = {{singularNameCamel}}._id;
+    }
+    onSubmit(data);
+  };
+
+  return (
+    <div className='h-full w-full flex flex-col gap-5'>
+      <h2 className='text-primary text-base font-bold'>{{singularName}} Information</h2>
+
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+        {{#each fields}}
+        {{#unless this.hidden}}
+        <div className='flex flex-col gap-1'>
+          {{#if (eq this.type "textarea")}}
+          <div>
+            <label htmlFor="{{this.name}}" className="text-sm font-medium leading-none">
+              {{this.label}}
+            </label>
+            <Textarea
+              id='{{this.name}}'
+              className='w-full mt-1'
+              {...register('{{this.name}}')}
+              placeholder='{{this.placeholder}}'
+            />
+            {errors.{{this.name}} && (
+              <span className='text-xs text-red-600'>{errors.{{this.name}}?.message}</span>
+            )}
+          </div>
+          {{else if (eq this.type "select")}}
+          <div>
+            <label htmlFor="{{this.name}}" className="text-sm font-medium leading-none">
+              {{this.label}}
+            </label>
+            <Controller
+              name='{{this.name}}'
+              control={control}
+              render={({ field }) => (
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select {{this.label}}" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {{#each this.options.values}}
+                    <SelectItem value="{{this}}">{{this}}</SelectItem>
+                    {{/each}}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.{{this.name}} && (
+              <span className='text-xs text-red-600'>{errors.{{this.name}}?.message}</span>
+            )}
+          </div>
+          {{else if (eq this.type "multiSelect")}}
+          <div>
+            <label htmlFor="{{this.name}}" className="text-sm font-medium leading-none">
+              {{this.label}}
+            </label>
+            <div className="text-xs text-muted-foreground">
+              Multiple select functionality would be implemented here
+            </div>
+          </div>
+          {{else if (eq this.type "password")}}
+          <div className='relative'>
+            <label htmlFor="{{this.name}}" className="text-sm font-medium leading-none">
+              {{this.label}}
+            </label>
+            <Input
+              type={show{{properCase this.name}} ? 'text' : 'password'}
+              id='{{this.name}}'
+              className='w-full mt-1'
+              {...register('{{this.name}}')}
+              placeholder='{{this.placeholder}}'
+            />
+            {errors.{{this.name}} && (
+              <span className='text-xs text-red-600'>{errors.{{this.name}}?.message}</span>
+            )}
+            <button
+              type='button'
+              className='absolute right-3 top-8'
+              onClick={() => setShow{{properCase this.name}}(!show{{properCase this.name}})}
+            >
+              {show{{properCase this.name}} ? (
+                <EyeOff className='h-4 w-4 text-gray-400' />
+              ) : (
+                <Eye className='h-4 w-4 text-gray-400' />
+              )}
+            </button>
+          </div>
+          {{else}}
+          <div>
+            <label htmlFor="{{this.name}}" className="text-sm font-medium leading-none">
+              {{this.label}}
+            </label>
+            <Input
+              id='{{this.name}}'
+              type='{{this.type}}'
+              className='w-full mt-1'
+              {...register('{{this.name}}')}
+              placeholder='{{this.placeholder}}'
+            />
+            {errors.{{this.name}} && (
+              <span className='text-xs text-red-600'>{errors.{{this.name}}?.message}</span>
+            )}
+          </div>
+          {{/if}}
+        </div>
+        {{/unless}}
+        {{/each}}
+        
+        {{#if hasPasswordFields}}
+        <div className='relative'>
+          <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">
+            Confirm Password
+          </label>
+          <Input
+            type={showPassword ? 'text' : 'password'}
+            id='confirmPassword'
+            className='w-full mt-1'
+            {...register('confirmPassword')}
+            placeholder='Confirm password'
+          />
+          {errors.confirmPassword && (
+            <span className='text-xs text-red-600'>{errors.confirmPassword?.message}</span>
+          )}
+          <button
+            type='button'
+            className='absolute right-3 top-8'
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? (
+              <EyeOff className='h-4 w-4 text-gray-400' />
+            ) : (
+              <Eye className='h-4 w-4 text-gray-400' />
+            )}
+          </button>
+        </div>
+        {{/if}}
+      </div>
+
+      <div className='flex justify-end gap-4 mt-4'>
+        <Button variant='outline' onClick={onClose}>
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit(handleFormSubmit)}
+          loading={isLoading}
+        >
+          {type === 'add' ? 'Create' : 'Update'}
+        </Button>
+      </div>
+    </div>
+  );
+};

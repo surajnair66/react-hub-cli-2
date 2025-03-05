@@ -3,9 +3,9 @@ import { EditIcon, Ellipsis, PlusIcon, TrashIcon, StarIcon } from 'lucide-react'
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { CreateDrawer } from './CreateDrawer';
-import { EditDrawer } from './EditDrawer';
+import { {{singularName}}Form } from './{{singularName}}Form';
 import { Button } from '@/components/ui/button';
+import { CustomSheet } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -131,6 +131,26 @@ export default function {{componentName}}() {
     setDrawerOpen(true);
   };
 
+  const handleFormSubmit = (data: any) => {
+    if (type === 'add') {
+      create{{singularName}}({
+        variables: {
+          data
+        }
+      });
+    } else {
+      update{{singularName}}({
+        variables: {
+          data
+        }
+      });
+    }
+  };
+
+  const drawerClose = () => {
+    setDrawerOpen(false);
+  };
+
   // Function to get empty text based on data
   const getEmptyText = () => {
     if ({{pluralNameCamel}}.length === 0) {
@@ -139,7 +159,7 @@ export default function {{componentName}}() {
     return null;
   };
 
-  const getInitialData = () =>  selected{{singularName}};
+  const initialData = selected{{singularName}};
 
   {{#if detailPage}}
   const handleView = (id: string) => {
@@ -235,40 +255,21 @@ export default function {{componentName}}() {
         />
       </div>
 
-      {/* Create Drawer */}
-      {drawerOpen && type === 'add' && (
-        <CreateDrawer 
-          isOpen={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          onSubmit={(data) => {
-            create{{singularName}}({
-              variables: {
-                data
-              }
-            });
-          }}
-          isLoading={createLoading}
-          drawerTitle={`Create {{singularName}}`}
+      {/* Form Sheet */}
+      <CustomSheet
+        Title={`${type === 'add' ? 'Add' : 'Edit'} {{singularName}}`}
+        open={drawerOpen}
+        onClose={drawerClose}
+      >
+        <{{singularName}}Form 
+          {{singularNameCamel}}={initialData}
+          type={type}
+          onClose={drawerClose}
+          refetch={refetch}
+          onSubmit={handleFormSubmit}
+          isLoading={type === 'add' ? createLoading : updateLoading}
         />
-      )}
-
-      {/* Edit Drawer */}
-      {drawerOpen && type === 'edit' && (
-        <EditDrawer 
-          isOpen={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          initialData={getInitialData()}
-          onSubmit={(data) => {
-            update{{singularName}}({
-              variables: {
-                data
-              }
-            });
-          }}
-          isLoading={updateLoading}
-          drawerTitle={`Update {{singularName}}`}
-        />
-      )}
+      </CustomSheet>
     </div>
   );
 }

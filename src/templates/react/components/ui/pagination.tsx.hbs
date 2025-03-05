@@ -184,6 +184,7 @@ const Pagination: React.FC<PaginationProps> = ({
               <PaginationLink
                 isActive={pageNumber === currentPage}
                 onClick={() => handleClick(pageNumber)}
+                className='data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground cursor-pointer'
               >
                 {pageNumber}
               </PaginationLink>

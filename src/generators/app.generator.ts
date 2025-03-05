@@ -4,10 +4,12 @@ import fs from "fs-extra";
 import path from "path";
 import util from "util";
 import { AbstractGenerator } from "../lib/abstract/generator";
+import { TBranding } from "../lib/types";
 import { info, success } from "../lib/ui/prefixes";
 
 interface ProjectOptions {
   projectName: string;
+  branding?: TBranding;
 }
 
 export class AppGenerator extends AbstractGenerator {
@@ -245,7 +247,6 @@ export default defineConfig({
 
   private async configureTailwind(options: ProjectOptions): Promise<void> {
     const dependencies = ["tailwindcss", "@tailwindcss/vite"];
-    console.log("Installing dependencies: ", dependencies);
     await this.installDependencies(options.projectName, dependencies, true);
   }
 
@@ -253,20 +254,23 @@ export default defineConfig({
     process.chdir(options.projectName);
 
     await Promise.all([
-      this.convertTemplate("/templates/config/shadcnui/index.css.hbs", `./src/index.css`),
+      this.convertTemplate("/templates/config/tailwind/index.css.hbs", `./src/index.css`),
       this.convertTemplate("/templates/config/tsconfig.hbs", `./tsconfig.json`),
       this.convertTemplate("/templates/config/tsconfig.app.hbs", `./tsconfig.app.json`),
     ]);
 
     await this.initializeShadCn();
 
+    await this.convertTemplate("/templates/config/shadcnui/index.css.hbs", `./src/index.css`, {
+      primaryColor: options.branding?.primaryColor ? this.hexToOklch(options.branding.primaryColor) : "oklch(31.19% 0.0952 259.33)",
+      secondaryColor: options.branding?.secondaryColor ? this.hexToOklch(options.branding.secondaryColor) : "oklch(0.967 0.001 286.375)",
+    });
+
     info(`Committing all generated files`);
     await this.commit("WIP: Adding Shadcn UI and Tailwind CSS");
   }
 
   private async configureApollo(options: ProjectOptions): Promise<void> {
-    const currentDir = process.cwd();
-    console.log("Current directory: ", currentDir);
     await Promise.all([
       this.convertTemplate("/templates/config/apollo/apollo-config.ts.hbs", `./src/config/apollo/apolloConfig.ts`),
       this.convertTemplate("/templates/config/apollo/error-handling.ts.hbs", `./src/config/apollo/errorHandling.ts`),
@@ -302,7 +306,7 @@ export default defineConfig({
 
   private async initializeShadCn() {
     try {
-      execSync("npx shadcn@canary init -d", { stdio: "inherit" });
+      execSync("npx shadcn@latest init -d", { stdio: "inherit" });
     } catch (error) {
       console.error("Failed to initialize ShadCn:", error);
       throw error;

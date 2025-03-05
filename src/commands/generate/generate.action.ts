@@ -16,10 +16,9 @@ export class GenerateAction extends AbstractAction {
       if (path.extname(pathName) !== ".json") throw new Error(`${path.extname(pathName)} extension not supported! (Supports: [ ".json" ])`);
 
       const jsonData: TRequirement = fs.readJsonSync(pathName, { encoding: "utf-8" });
-      console.log("jsonData", jsonData);
 
       const appGenerator = new AppGenerator();
-      await appGenerator.generate({ projectName: jsonData.app.name });
+      await appGenerator.generate({ projectName: jsonData.app.name, branding: jsonData.app.branding });
 
       const routes: Route[] = [];
       jsonData.modules.forEach((module) => {

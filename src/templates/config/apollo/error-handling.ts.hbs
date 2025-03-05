@@ -1,4 +1,4 @@
-import { fromPromise } from '@apollo/client';
+import { fromPromise, gql } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { authState } from '../../vars/auth';
 import { client } from './apolloConfig';
@@ -11,7 +11,7 @@ export const GEN_TOKEN = gql(`
   }
   `);
 
-const logoutUser = () => {
+export const logoutUser = () => {
   localStorage.clear();
   client.clearStore();
   authState({

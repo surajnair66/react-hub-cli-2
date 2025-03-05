@@ -1,8 +1,7 @@
-import fs from "fs-extra";
 import { camelCase, startCase, upperFirst } from "lodash";
 import { AbstractGenerator } from "../../lib/abstract/generator";
 import { TListingPage } from "../../lib/types";
-import { info } from "../../lib/ui/prefixes";
+import { error, info } from "../../lib/ui/prefixes";
 
 export class CRUDGenerator extends AbstractGenerator {
   constructor(
@@ -31,14 +30,15 @@ export class CRUDGenerator extends AbstractGenerator {
   }
 
   private async addCustomComponents(): Promise<void> {
+    await this.addShadCnComponents(["drawer", "select", "input", "textarea", "label"]);
+
     await Promise.all([
       this.convertTemplate("/templates/react/components/ui/table.tsx.hbs", "src/components/ui/table.tsx"),
       this.convertTemplate("/templates/react/components/ui/table-header.tsx.hbs", "src/components/ui/table-header.tsx"),
       this.convertTemplate("/templates/react/components/ui/pagination.tsx.hbs", "src/components/ui/pagination.tsx"),
       this.convertTemplate("/templates/react/components/tableLoader.tsx.hbs", "src/components/tableLoader.tsx"),
+      this.convertTemplate("/templates/react/components/ui/sheet.tsx.hbs", "src/components/ui/sheet.tsx"),
     ]);
-
-    await this.addShadCnComponents(["drawer", "select", "input", "textarea", "label"]);
   }
 
   private async addQueriesAndMutations(): Promise<void> {
@@ -55,6 +55,12 @@ export class CRUDGenerator extends AbstractGenerator {
       `src/pages/${pagePath}/graphql/index.ts`,
       { apis }
     );
+
+    try {
+      await this.codgenCompile();
+    } catch (e) {
+      error("An error occured during codegen compile, you can manually run it again");
+    }
   }
 
   private getPagePath() {
@@ -79,6 +85,7 @@ export class CRUDGenerator extends AbstractGenerator {
     const singularName = pluralName.endsWith("s")
       ? pluralName.slice(0, -1) // e.g., "Trainer"
       : pluralName;
+    const singularNameCamel = camelCase(singularName);
 
     // Prepare column definitions
     const columns = this.prepareColumns();
@@ -92,24 +99,23 @@ export class CRUDGenerator extends AbstractGenerator {
     // Check if there's a detail page route and name
     const detailInfo = this.getDetailPageInfo(basePath, actions.hasView);
 
-    // Prepare fields for drawers
-    const createFields = this.prepareFields(this.pageData.drawerCreate.fields);
-    const updateFields = this.prepareFields(this.pageData.drawerUpdate.fields);
+    // Prepare fields for the form
+    const allFields = this.prepareAllFields();
+
+    // Check for password fields for special handling
+    const passwordFields = allFields.filter((field) => field.type === "password");
+    const hasPasswordFields = passwordFields.length > 0;
 
     // Generate components
     const pagePath = camelCase(basePath);
     const componentDir = `src/pages/${pagePath}`;
 
-    // Ensure directory exists
-    fs.ensureDirSync(componentDir);
-
-    // Create component files
     await Promise.all([
-      // Main listing page
+      // Listing Component
       this.convertTemplate("/templates/react/pages/advanced-pages/crud/index.tsx.hbs", `${componentDir}/index.tsx`, {
         componentName: upperFirst(pluralName),
         singularName,
-        singularNameCamel: camelCase(singularName),
+        singularNameCamel,
         pluralName,
         pluralNameCamel: camelCase(pluralName),
         title: pluralName,
@@ -126,25 +132,35 @@ export class CRUDGenerator extends AbstractGenerator {
         detailRouteName: detailInfo.detailRouteName,
       }),
 
-      // Create drawer component
-      this.convertTemplate("/templates/react/pages/advanced-pages/crud/drawer.tsx.hbs", `${componentDir}/CreateDrawer.tsx`, {
+      // Form Component
+      this.convertTemplate("/templates/react/pages/advanced-pages/crud/form.tsx.hbs", `${componentDir}/${singularName}Form.tsx`, {
         singularName,
-        fields: createFields,
-        editMode: false,
+        singularNameCamel,
+        fields: allFields,
+        hasPasswordFields,
+        passwordFields,
       }),
 
-      // Edit drawer component
-      this.convertTemplate("/templates/react/pages/advanced-pages/crud/drawer.tsx.hbs", `${componentDir}/EditDrawer.tsx`, {
-        singularName,
-        fields: updateFields,
-        editMode: true,
-      }),
+      this.commit(`WIP: Adding ${singularNameCamel} CRUD page`),
     ]);
   }
 
-  /**
-   * Prepare columns with custom rendering
-   */
+  private prepareAllFields() {
+    const createFields = this.prepareFields(this.pageData.drawerCreate.fields);
+    const updateFields = this.prepareFields(this.pageData.drawerUpdate.fields);
+
+    // Combine fields, removing duplicates by name
+    const fieldMap = new Map();
+
+    [...createFields, ...updateFields].forEach((field) => {
+      if (!fieldMap.has(field.name)) {
+        fieldMap.set(field.name, field);
+      }
+    });
+
+    return Array.from(fieldMap.values());
+  }
+
   private prepareColumns() {
     return this.pageData.columns.map((column) => {
       const fieldParts = column.field.split(".");
@@ -199,7 +215,7 @@ export class CRUDGenerator extends AbstractGenerator {
 
   private getDetailPageInfo(basePath: string, hasViewAction: boolean) {
     return {
-      hasDetailPage: hasViewAction,
+      hasDetailPage: this.pageData.type === "Listing" && hasViewAction,
       detailRouteName: hasViewAction ? `${camelCase(basePath)}Detail` : null,
     };
   }

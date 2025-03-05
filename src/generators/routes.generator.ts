@@ -90,11 +90,11 @@ export class RoutesGenerator extends AbstractGenerator {
         privateRoutes,
         publicRoutes,
         routeDefenitions,
-        initialRoute: routeDefenitions[0].name,
+        initialRoute: privateRoutes[0].name,
       }),
       this.convertTemplate("/templates/react/routes/advanced-route/private.tsx.hbs", "src/routes/private.tsx"),
       this.convertTemplate("/templates/react/routes/advanced-route/public.tsx.hbs", "src/routes/public.tsx", {
-        initialRoute: routeDefenitions[0].name,
+        initialRoute: privateRoutes[0].name,
       }),
     ]);
   }

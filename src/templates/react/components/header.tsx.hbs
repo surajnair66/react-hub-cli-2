@@ -1,3 +1,4 @@
+import { logoutUser } from '@/config/apollo/errorHandling';
 import { cn } from '@/lib/utils';
 import { userDetails } from '@/vars/userDetails';
 import { useReactiveVar } from '@apollo/client';
@@ -64,22 +65,14 @@ export default function Header() {
       <Dialog open={dialogOpen} onOpenChange={dialogClose}>
         <DialogContent className='sm:max-w-[425px] p-6'>
           <DialogHeader>
-            <DialogTitle className='text-[#3f5595] text-3xl'>Logout?</DialogTitle>
+            <DialogTitle className='text-2xl'>Logout?</DialogTitle>
           </DialogHeader>
-          <h5 className='text-[#3f5595]'> Are you sure you want to logout ?</h5>
+          <h5> Are you sure you want to logout ?</h5>
           <DialogFooter>
-            <Button
-              id='cancel'
-              className='bg-[#1474f2] text-white hover:bg-[#427fcf] px-5 w-min'
-              onClick={dialogClose}
-            >
+            <Button id='cancel' className='px-5 w-min' onClick={dialogClose}>
               No
             </Button>
-            <Button
-              id='savebtn'
-              className='bg-[#1474f2] text-white hover:bg-[#427fcf] px-5 w-min'
-              onClick={() => {}}
-            >
+            <Button id='savebtn' className='px-5 w-min' onClick={() => logoutUser()}>
               Yes
             </Button>
           </DialogFooter>
